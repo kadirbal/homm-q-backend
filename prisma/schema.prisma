@@ -1,0 +1,97 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+model Product {
+    id   String @id @default(auto()) @map("_id") @db.ObjectId
+    name String
+    code String @default("DU-000")
+
+    ProductPrice ProductPrice[]
+
+    OrderItem     OrderItem[]
+    PeriodProduct PeriodProduct[]
+}
+
+model ProductPrice {
+    id    String @id @default(auto()) @map("_id") @db.ObjectId
+    price Float
+
+    product   Product @relation(fields: [productId], references: [id])
+    productId String  @db.ObjectId
+
+    createdAt DateTime @default(now())
+}
+
+model Period {
+    id             String @id @default(auto()) @map("_id") @db.ObjectId
+    minOrderAmount Float
+
+    month Int
+
+    createdAt DateTime @default(now())
+
+    Campaign   Campaign? @relation(fields: [campaignId], references: [id])
+    campaignId String?   @db.ObjectId
+
+    PeriodProduct PeriodProduct[]
+}
+
+model PeriodProduct {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    period   Period @relation(fields: [periodId], references: [id])
+    periodId String @db.ObjectId
+
+    product   Product @relation(fields: [productId], references: [id])
+    productId String  @db.ObjectId
+}
+
+model Campaign {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    name      String
+    startDate DateTime
+
+    periods Period[]
+}
+
+model User {
+    id                     String   @id @default(auto()) @map("_id") @db.ObjectId
+    email                  String
+    password               String
+    hasUsedWelcomeCampaign Boolean  @default(false)
+    createdAt              DateTime @default(now())
+
+    Order Order[]
+
+    @@unique([email])
+}
+
+model Order {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String   @db.ObjectId
+    amount    Float
+    createdAt DateTime @default(now())
+
+    items OrderItem[]
+}
+
+model OrderItem {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    quantity Int
+
+    price Float
+
+    product   Product @relation(fields: [productId], references: [id])
+    productId String  @db.ObjectId
+
+    Order   Order?  @relation(fields: [orderId], references: [id])
+    orderId String? @db.ObjectId
+}
